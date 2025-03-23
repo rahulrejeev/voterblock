@@ -19,11 +19,20 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RepresentativeCard from "./components/RepresentativeCard";
 
-interface FormData {
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
+interface GoogleCivicResponse {
+  offices: Array<{
+    name: string;
+    divisionId: string;
+    officialIndices: number[];
+  }>;
+  officials: Array<{
+    name: string;
+    party?: string;
+    phones?: string[];
+    urls?: string[];
+    emails?: string[];
+  }>;
+  error?: string;
 }
 
 interface Representative {
@@ -61,6 +70,13 @@ function TabPanel(props: TabPanelProps) {
       )}
     </div>
   );
+}
+
+interface FormData {
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
 }
 
 export default function Home() {
@@ -114,7 +130,7 @@ export default function Home() {
         throw new Error('Failed to fetch representatives');
       }
 
-      const result = await response.json();
+      const result = await response.json() as GoogleCivicResponse;
       if (result.error) {
         throw new Error(result.error);
       }
@@ -122,24 +138,23 @@ export default function Home() {
       const reps: Representative[] = [];
       
       // Process the API response
-      for (const [officeIndex, office] of Object.entries(result.offices)) {
-        const divisionId = (office as any).divisionId;
+      for (const office of Object.values(result.offices)) {
+        const divisionId = office.divisionId;
         let level = getDivisionLevel(divisionId);
         
         // Special handling for federal positions
-        const officeName = (office as any).name.toLowerCase();
+        const officeName = office.name.toLowerCase();
         if (officeName.includes('president') || 
             officeName.includes('senator') || 
             officeName.includes('representative')) {
           level = 'federal';
         }
 
-        const officialIndices = (office as any).officialIndices;
-        officialIndices.forEach((officialIndex: number) => {
+        office.officialIndices.forEach(officialIndex => {
           const official = result.officials[officialIndex];
           reps.push({
             name: official.name,
-            office: (office as any).name,
+            office: office.name,
             party: official.party,
             phones: official.phones,
             urls: official.urls,
@@ -153,8 +168,8 @@ export default function Home() {
       console.log('Processed representatives:', reps.map(r => ({ name: r.name, level: r.level, office: r.office })));
       setRepresentatives(reps);
       setTabValue(0); // Reset to first tab when new results come in
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch representatives. Please try again.');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to fetch representatives');
     } finally {
       setLoading(false);
     }

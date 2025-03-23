@@ -15,6 +15,8 @@ interface NewsArticle {
   snippet: string;
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 function parseNewsContent(content: string): NewsArticle[] {
   // Array to store extracted articles
   const articles: NewsArticle[] = [];
@@ -25,7 +27,7 @@ function parseNewsContent(content: string): NewsArticle[] {
   
   while ((match = articleRegex.exec(content)) !== null) {
     // Extract article number and title
-    const articleNum = match[1];
+    // const articleNum = match[1];
     const title = match[2]?.trim();
     const details = match[3]?.trim();
     
@@ -38,7 +40,8 @@ function parseNewsContent(content: string): NewsArticle[] {
       url = urlMatch[2].split('?')[0]; // Remove UTM parameters
     } else {
       // Try alternate URL formats
-      const altUrlMatch = details.match(/\(([^)]+\.[a-z]{2,}[^)]*)\)/);
+      const altUrlMatch: RegExpMatchArray | null = details.match(/\(([^)]+\.[a-z]{2,}[^)]*)\)/);
+
       if (altUrlMatch) {
         url = altUrlMatch[1].split('?')[0];
       }

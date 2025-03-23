@@ -11,6 +11,19 @@ interface RepresentativeProps {
   emails?: string[];
 }
 
+interface NewsItem {
+  title: string;
+  url: string;
+  date: string;
+  source: string;
+  snippet: string;
+}
+
+interface NewsResponse {
+  articles: NewsItem[];
+  error?: string;
+}
+
 export default function RepresentativeCard({
   name,
   office,
@@ -20,7 +33,7 @@ export default function RepresentativeCard({
   emails,
 }: RepresentativeProps) {
   const [loading, setLoading] = useState(false);
-  const [news, setNews] = useState([]);
+  const [news, setNews] = useState<NewsItem[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const getPartyColor = (party?: string) => {
@@ -47,14 +60,14 @@ export default function RepresentativeCard({
         throw new Error('Failed to fetch news');
       }
 
-      const data = await response.json();
+      const data = await response.json() as NewsResponse;
       if (data.error) {
         throw new Error(data.error);
       }
 
       setNews(data.articles);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch news');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to fetch news');
     } finally {
       setLoading(false);
     }
